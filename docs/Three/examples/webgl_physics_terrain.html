@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Ammo.js terrain heightfield demo</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                color: #61443e;
+                font-family:Monospace;
+                font-size:13px;
+                text-align:center;
+
+                background-color: #bfd1e5;
+                margin: 0px;
+                overflow: hidden;
+            }
+
+            #info {
+                position: absolute;
+                top: 0px; width: 100%;
+                padding: 5px;
+            }
+
+            a {
+
+                color: #a06851;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="container"><br /><br /><br /><br /><br />Loading...</div>
+        <div id="info">Ammo.js physics terrain heightfield demo</div>
+
+	       <script src="../build/three.js"></script>
+	       <!--<script src="js/libs/ammo.js"></script>-->
+	       <script src="js/controls/OrbitControls.js"></script>
+            <script src="js/Detector.js"></script>
+	       <script src="js/libs/stats.min.js"></script>
+
+        <script>
+            
+        var render_flag = true;
+            
+        // communication between iframes source
+        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+        document.addEventListener("message", function(e){
+                                  alert("button clicked");
+                                  }, false);
+
+        /*function receiveMessage(event)
+        {
+            
+          var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
+          if (origin !== "../jquery-ui-1.12.1.custom/index.html")
+            return;
+
+          if( event.data = "stop render")
+          {   
+              
+              render_flag = false;
+          }
+          // ...
+        }*/
+		// Detects webgl
+		if ( ! Detector.webgl ) {
+			Detector.addGetWebGLMessage();
+			document.getElementById( 'container' ).innerHTML = "";
+		}
+
+		// - Global variables -
+
+		// Heightfield parameters
+		var terrainWidthExtents = 100;
+		var terrainDepthExtents = 100;
+		var terrainWidth = 128;
+		var terrainDepth = 128;
+		var terrainHalfWidth = terrainWidth / 2;
+		var terrainHalfDepth = terrainDepth / 2;
+		var terrainMaxHeight = 8;
+		var terrainMinHeight = -2;
+
+		// Graphics variables
+		var container, stats;
+		var camera, controls, scene, renderer;
+            var  particles, geometry, material, i, h, color, sprite, size;
+		var terrainMesh, texture;
+		var clock = new THREE.Clock();
+
+		// Physics variables
+		var collisionConfiguration;
+		var dispatcher;
+		var broadphase;
+		var solver;
+		var physicsWorld;
+		var terrainBody;
+		var dynamicObjects = [];
+		//var transformAux1 = new Ammo.btTransform();
+//
+		var heightData = null;
+		var ammoHeightData = null;
+
+		var time = 0;
+		var objectTimePeriod = 3;
+		var timeNextSpawn = time + objectTimePeriod;
+		var maxNumObjects = 30;
+
+		// - Main code -
+		init();
+		animate();
+
+		function init() {
+
+			heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
+
+			initGraphics();
+
+			//initPhysics();
+
+		}
+
+		function initGraphics() {
+
+			container = document.getElementById( 'container' );
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setClearColor( 0xbfd1e5 );
+			renderer.shadowMap.enabled = true;
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+			container.innerHTML = "";
+
+			container.appendChild( renderer.domElement );
+
+			stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			container.appendChild( stats.domElement );
+
+
+			camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+
+			scene = new THREE.Scene();
+
+			camera.position.y = heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight ) + 5;
+
+			camera.position.z = terrainDepthExtents / 2;
+			camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+
+			controls = new THREE.OrbitControls( camera );
+
+			var geometry = new THREE.PlaneBufferGeometry( 100, 100, terrainWidth - 1, terrainDepth - 1 );
+			geometry.rotateX( -Math.PI / 2 );
+
+			var vertices = geometry.attributes.position.array;
+
+			for ( var i = 0, j = 0, l = vertices.length; i < l; i++, j += 3 ) {
+
+				// j + 1 because it is the y component that we modify
+				vertices[ j + 1 ] = heightData[ i ];
+
+			}
+
+			geometry.computeVertexNormals();
+
+			var groundMaterial = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
+			terrainMesh = new THREE.Mesh( geometry, groundMaterial );
+			terrainMesh.receiveShadow = true;
+			terrainMesh.castShadow = true;
+
+			scene.add( terrainMesh );
+
+			var textureLoader = new THREE.TextureLoader();
+			textureLoader.load("textures/grid.png", function ( texture ) {
+				texture.wrapS = THREE.RepeatWrapping;
+				texture.wrapT = THREE.RepeatWrapping;
+				texture.repeat.set( terrainWidth - 1, terrainDepth - 1 );
+				groundMaterial.map = texture;
+				groundMaterial.needsUpdate = true;
+
+			});
+            
+            geometry = new THREE.Geometry();
+            sprite = textureLoader.load( "textures/sprites/disc.png" );
+
+			for ( i = 0; i < 100; i ++ ) {
+
+				var vertex = new THREE.Vector3();
+				vertex.x = 100 * Math.random() - 50;
+				vertex.z = 100 * Math.random() - 50;
+                    
+                // to compute the height they are transformed
+                // into the range -3 to 3, so 
+                // if vertex.z === -50, then we have 
+                // -50*6/100 = -300/100 = -3
+                var X =  vertex.z * 6.0/100; 
+                
+                var Y =  vertex.x * 6.0/100;
+                   
+                var height = computePeaks(X,Y);
+                    
+				vertex.y = 3*height+0.5;
+
+				geometry.vertices.push( vertex );
+
+            }
+
+            material = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, map: sprite, alphaTest: 0.5, transparent: true } );
+            material.color.setHSL( 1.0, 0.3, 0.7 );
+
+            particles = new THREE.Points( geometry, material );
+            scene.add( particles );
+            
+
+			var light = new THREE.DirectionalLight( 0xffffff, 1 );
+			light.position.set( -100, 100, 50 );
+			light.castShadow = false;
+			var dLight = 200;
+			var sLight = dLight * 0.25;
+			light.shadow.camera.left = -sLight;
+			light.shadow.camera.right = sLight;
+			light.shadow.camera.top = sLight;
+			light.shadow.camera.bottom = -sLight;
+
+			light.shadow.camera.near = dLight / 30;
+			light.shadow.camera.far = dLight;
+
+			light.shadow.mapSize.x = 1024 * 2;
+			light.shadow.mapSize.y = 1024 * 2;
+
+			scene.add(light);
+
+
+			window.addEventListener( 'resize', onWindowResize, false );
+
+		}
+
+		function onWindowResize() {
+
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+		}
+
+        function computePeaks( X, Y )
+        {
+             return 3*(1-X)*(1-X)*Math.exp(-(X*X) - (Y+1)*(Y+1)) - 10*(X/5 - X*X*X - Y*Y*Y*Y*Y)*Math.exp(-X*X-Y*Y) - 1/3*Math.exp(-(X+1)*(X+1) - Y*Y);
+        }
+            
+        function peaksDerivX(x, y)
+        {
+            return -6*(1-x)*(1-x)*x*Math.exp(-x*x-(y+1)*(y+1))-6*(1-x)*Math.exp(-x*x-(y+1)*(y+1))+20*x*(-Math.pow(x,3)+x/5-Math.pow(y,5))*Math.exp(-x*x-y*y)-10*(1/5-3*x*x)*Math.exp(-x*x-y*y)-(-2*x-2)*Math.exp((-x-1)*(x+1)-y*y)/3;
+        }
+        
+        function peaksDerivY(x, y)
+        {
+            return -6*(1-x)*(1-x)*(y+1)*Math.exp(-(y+1)*(y+1)-x*x)+20*y*(-Math.pow(y,5)-Math.pow(x,3)+x/5)*Math.exp(-y*y-x*x)+50*Math.pow(y,4)*Math.exp(-y*y-x*x)+2*y*Math.exp((-x-1)*(x+1)-y*y)/3;   
+        }
+            
+
+
+		function generateHeight( width, depth, minHeight, maxHeight ) {
+
+			// Generates the height data (a sinus wave)
+            // Dave: Modified to produce a Matlab-style "Peaks" function
+
+			var size = width * depth;
+			var data = new Float32Array(size);
+
+			var hRange = maxHeight - minHeight;
+			var w2 = width / 2;
+			var d2 = depth / 2;
+			var phaseMult = 12;
+
+			var p = 0;
+			for ( var j = 0; j < depth; j++ ) {
+				for ( var i = 0; i < width; i++ ) {
+
+					//var radius = Math.sqrt(
+					//		Math.pow( ( i - w2 ) / w2, 2.0 ) +
+					//		Math.pow( ( j - d2 ) / d2, 2.0 ) );
+//
+					//var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
+                    var X = -3.0 + j * 6.0/depth;
+                   
+                    
+                    var Y = -3.0 + i * 6.0/width;
+                   
+         
+                    var height = computePeaks(X,Y);
+                  
+					data[ p ] = 3*height;
+
+					p++;
+				}
+			}
+
+			return data;
+
+		}
+
+
+		function createObjectMaterial() {
+			var c = Math.floor( Math.random() * ( 1 << 24 ) );
+			return new THREE.MeshPhongMaterial( { color: c } );
+		}
+            
+        function updateParticles( up )
+        {
+            for ( i = 0; i < scene.children.length; i ++ ) 
+            {
+				var object = scene.children[ i ];
+				if ( object instanceof THREE.Points ) {
+                    for( j = 0; j < object.geometry.vertices.length; j++ )
+                    {
+                        var v = object.geometry.vertices[j];// = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+
+                        var x= v.z*6/100;
+                        var y=v.x*6/100;
+                        
+                        var deriv_x = peaksDerivX(x,y);
+                        var deriv_y = peaksDerivY(x,y);
+
+                    
+                        x += up * 0.01* deriv_x;
+                        y += up * 0.01* deriv_y;                     
+
+                         var X =  x;// * 6.0/100;
+
+
+                         var Y =  y;// * 6.0/100;
+
+                         var height = computePeaks(X,Y);
+                        
+                         object.geometry.vertices[j].x = y* 100/6;
+                         object.geometry.vertices[j].z =x* 100/6;
+                         object.geometry.vertices[j].y =3 * height + 0.5;
+                    }
+                    // have to flag this for update
+                    object.geometry.verticesNeedUpdate = true;
+
+				}     
+            }
+        }
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+
+            if( render_flag )
+            {
+                 updateParticles(1.0);
+                 //updateParticles(-1.0);
+			     render();
+			     stats.update();
+            }
+
+		}
+
+		function render() {
+
+			var deltaTime = clock.getDelta();
+
+			/*if ( dynamicObjects.length < maxNumObjects && time > timeNextSpawn ) {
+				generateObject();
+				timeNextSpawn = time + objectTimePeriod;
+			}*/
+
+			//updatePhysics( deltaTime );
+
+			controls.update( deltaTime );
+
+			renderer.render( scene, camera );
+
+			time += deltaTime;
+
+		}
+
+		/*function updatePhysics( deltaTime ) {
+
+			physicsWorld.stepSimulation( deltaTime, 10 );
+
+			// Update objects
+			for ( var i = 0, il = dynamicObjects.length; i < il; i++ ) {
+				var objThree = dynamicObjects[ i ];
+				var objPhys = objThree.userData.physicsBody;
+				var ms = objPhys.getMotionState();
+				if ( ms ) {
+
+					ms.getWorldTransform( transformAux1 );
+					var p = transformAux1.getOrigin();
+					var q = transformAux1.getRotation();
+					objThree.position.set( p.x(), p.y(), p.z() );
+					objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+
+				}
+			}
+		}*/
+
+        </script>
+
+    </body>
+</html>

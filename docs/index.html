@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Complex Layout - jQuery EasyUI Demo</title>
+
+    <link rel="stylesheet" type="text/css" href="http://www.jeasyui.com/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="http://www.jeasyui.com/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="http://www.jeasyui.com/easyui/themes/demo.css">
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.min.js"></script>
+    <script type="text/javascript" src="http://www.jeasyui.com/easyui/jquery.easyui.min.js"></script>
+
+    <style>
+        body {
+    font-family:verdana,helvetica,arial,sans-serif;
+    padding:20px;
+    font-size:12px;
+    margin:0;
+}
+    </style>
+       
+</head>
+<body class="easyui-layout">
+
+
+       <script src="Three/build/three.js"></script>
+       <script src="Three/examples/js/controls/OrbitControls.js"></script>
+       <script src="Three/examples/js/Detector.js"></script>
+       <script src="Three/examples/js/libs/stats.min.js"></script>  
+    
+    
+
+		<div id = "north" data-options="region:'north'" style="height:50px">
+            
+               <div class="easyui-panel" style="padding:5px;">
+        <a href="#" class="easyui-linkbutton" data-options="plain:true">Home</a>
+        <a href="#" class="easyui-menubutton" data-options="menu:'#mm1',iconCls:'icon-edit'">Edit</a>
+        <a href="#" class="easyui-menubutton" data-options="menu:'#mm2',iconCls:'icon-help'">Help</a>
+        <a href="#" class="easyui-menubutton" data-options="menu:'#mm3'">About</a>
+              
+    </div>
+    <div id="mm1" style="width:150px;">
+        <div data-options="iconCls:'icon-undo'">Undo</div>
+        <div data-options="iconCls:'icon-redo'">Redo</div>
+        <div class="menu-sep"></div>
+        <div>Cut</div>
+        <div>Copy</div>
+        <div>Paste</div>
+        <div class="menu-sep"></div>
+        <div>
+            <span>Toolbar</span>
+            <div>
+                <div>Address</div>
+                <div>Link</div>
+                <div>Navigation Toolbar</div>
+                <div>Bookmark Toolbar</div>
+                <div class="menu-sep"></div>
+                <div>New Toolbar...</div>
+            </div>
+            
+        </div>
+        <div data-options="iconCls:'icon-remove'">Delete</div>
+        <div>Select All</div>
+    </div>
+    <div id="mm2" style="width:100px;">
+        <div>Help</div>
+        <div>Update</div>
+        <div>About</div>
+    </div>
+    <div id="mm3" class="menu-content" style="background:#f0f0f0;padding:10px;text-align:left">
+        <img src="http://www.jeasyui.com/images/logo1.png" style="width:150px;height:50px">
+        <p style="font-size:14px;color:#444;">Try jQuery EasyUI to build your modern, interactive, javascript applications.</p>
+    </div>
+        </div>
+		<div  id = "south" data-options="region:'south',split:true" style="height:150px;">
+            <div class="easyui-panel" title="Nested Panel" style="width:100%;height:100%;padding:10px;">
+        <div class="easyui-layout" data-options="fit:true">
+            <div data-options="region:'west',split:true" style="width:100px;padding:10px">
+                Left Content
+            </div>
+            <div data-options="region:'east'" style="width:100px;padding:10px">
+                Right Content
+            </div>
+            <div data-options="region:'center'" style="padding:10px">
+                Center Content
+            </div>
+        </div>
+    </div>
+    </div>
+
+					
+					
+		<div  id = "east" data-options="region:'east',split:true" title="East" style="width:300px;position:relative;">
+        			
+            <div id="tt" class="easyui-tabs" style = "width:100%" >
+                <div title="About" style="padding:10px">
+                <h1>About</h1>
+                <p>The 3d view shows particles moving in the direction of greatest ascent
+                - they move in the direction of the positive gradient of the generating function.</p>
+                </div>
+                <div title="My Documents" style="padding:10px">
+                 <ul class="easyui-tree" data-options="url:'tree_data1.json',method:'get',animate:true"></ul>
+                </div>
+                <div title="Help" data-options="iconCls:'icon-help',closable:true" style="padding:10px">
+                 This is the help content.
+                </div>
+            </div>
+            <div id="tt2" class="easyui-tabs" style = "width:100%" >
+                <div title="About" style="padding:10px">
+                <h1>About</h1>
+                <p>The 3d view shows particles moving in the direction of greatest ascent
+                - they move in the direction of the positive gradient of the generating function.</p>
+                </div>
+                <div title="My Documents" style="padding:10px">
+                 <ul class="easyui-tree" data-options="url:'tree_data1.json',method:'get',animate:true"></ul>
+                </div>
+                <div title="Help" data-options="iconCls:'icon-help',closable:true" style="padding:10px">
+                 This is the help content.
+                </div>                
+	        </div>                       
+
+					
+        </div>
+    
+
+ 
+		<div id = "west" data-options="region:'west',split:true" title="West" style="width:150px;">
+			<div class="easyui-accordion" data-options="fit:true,border:false">
+				<div title="Title1" style="padding:10px;">
+					content1
+				</div>
+				<div title="Title2" data-options="selected:true" style="padding:10px;">
+					content2
+				</div>
+				<div title="Title3" style="padding:10px">
+					content3
+				</div>
+			</div>
+		</div>
+    
+		<div data-options="region:'center',title:'Main Title',iconCls:'icon-ok'">
+			<div id="container">
+				
+			</div>
+		</div>
+	<!--</div>-->
+    
+  
+      <script>
+        
+	   function setTabs(){
+			$('#tt').tabs({
+				plain: false,
+				narrow: true,
+				pill: true,
+				justified: false,
+			})
+		}
+          
+        setTabs();
+              
+        var render_flag = true;
+            
+
+		// Detects webgl
+		if ( ! Detector.webgl ) {
+			Detector.addGetWebGLMessage();
+			document.getElementById( 'container' ).innerHTML = "";
+		}
+
+		// - Global variables -
+
+		// Heightfield parameters
+		var terrainWidthExtents = 100;
+		var terrainDepthExtents = 100;
+		var terrainWidth = 128;
+		var terrainDepth = 128;
+		var terrainHalfWidth = terrainWidth / 2;
+		var terrainHalfDepth = terrainDepth / 2;
+		var terrainMaxHeight = 8;
+		var terrainMinHeight = -2;
+
+		// Graphics variables
+		var container, stats;
+		var camera, controls, scene, renderer;
+            var  particles, geometry, material, i, h, color, sprite, size;
+		var terrainMesh, texture;
+		var clock = new THREE.Clock();
+
+		// Physics variables
+		var collisionConfiguration;
+		var dispatcher;
+		var broadphase;
+		var solver;
+		var physicsWorld;
+		var terrainBody;
+		var dynamicObjects = [];
+		//var transformAux1 = new Ammo.btTransform();
+//
+		var heightData = null;
+		var ammoHeightData = null;
+
+		var time = 0;
+		var objectTimePeriod = 3;
+		var timeNextSpawn = time + objectTimePeriod;
+		var maxNumObjects = 30;
+
+		// - Main code -
+		init();
+		animate();
+
+		function init() {
+
+			heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
+
+			initGraphics();
+
+			//initPhysics();
+
+		}
+          
+        function computeGraphicsWidth()
+          {
+             return window.innerWidth - $("#east").outerWidth() -  $("#west").outerWidth() - 10;
+          }
+        function computeGraphicsHeight()
+          {
+             return window.innerHeight - $("#north").outerHeight() -  $("#south").outerHeight()-30;
+          }          
+          
+
+		function initGraphics() {
+
+			container = document.getElementById( 'container' );
+            
+            var DivWidth = computeGraphicsWidth();
+            var DivHeight = computeGraphicsHeight();
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setClearColor( 0xbfd1e5 );
+			renderer.shadowMap.enabled = true;
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( DivWidth, DivHeight );
+
+			container.innerHTML = "";
+
+			container.appendChild( renderer.domElement );
+
+			stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '50px';
+            
+			container.appendChild( stats.domElement );
+
+
+			camera = new THREE.PerspectiveCamera( 60, DivWidth / DivHeight, 0.2, 2000 );
+
+			scene = new THREE.Scene();
+
+			camera.position.y = heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight ) + 5;
+
+			camera.position.z = terrainDepthExtents / 2;
+			camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+
+			controls = new THREE.OrbitControls( camera );
+
+			var geometry = new THREE.PlaneBufferGeometry( 100, 100, terrainWidth - 1, terrainDepth - 1 );
+			geometry.rotateX( -Math.PI / 2 );
+
+			var vertices = geometry.attributes.position.array;
+
+			for ( var i = 0, j = 0, l = vertices.length; i < l; i++, j += 3 ) {
+
+				// j + 1 because it is the y component that we modify
+				vertices[ j + 1 ] = heightData[ i ];
+
+			}
+
+			geometry.computeVertexNormals();
+
+			var groundMaterial = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
+			terrainMesh = new THREE.Mesh( geometry, groundMaterial );
+			terrainMesh.receiveShadow = true;
+			terrainMesh.castShadow = true;
+
+			scene.add( terrainMesh );
+
+			var textureLoader = new THREE.TextureLoader();
+			textureLoader.load("Three/examples/textures/grid.png", function ( texture ) {
+				texture.wrapS = THREE.RepeatWrapping;
+				texture.wrapT = THREE.RepeatWrapping;
+				texture.repeat.set( terrainWidth - 1, terrainDepth - 1 );
+				groundMaterial.map = texture;
+				groundMaterial.needsUpdate = true;
+
+			});
+            
+            geometry = new THREE.Geometry();
+            sprite = textureLoader.load( "Three/examples/textures/sprites/disc.png" );
+
+			for ( i = 0; i < 100; i ++ ) {
+
+				var vertex = new THREE.Vector3();
+				vertex.x = 100 * Math.random() - 50;
+				vertex.z = 100 * Math.random() - 50;
+                    
+                // to compute the height they are transformed
+                // into the range -3 to 3, so 
+                // if vertex.z === -50, then we have 
+                // -50*6/100 = -300/100 = -3
+                var X =  vertex.x * 6.0/100; 
+                
+                var Y =  vertex.z * 6.0/100;
+                   
+                var height = computePeaks(X,Y);
+                    
+				vertex.y = 3*height+0.5;
+
+				geometry.vertices.push( vertex );
+
+            }
+
+            material = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, map: sprite, alphaTest: 0.5, transparent: true } );
+            material.color.setHSL( 1.0, 0.3, 0.7 );
+
+            particles = new THREE.Points( geometry, material );
+            scene.add( particles );
+            
+
+			var light = new THREE.DirectionalLight( 0xffffff, 1 );
+			light.position.set( -100, 100, 50 );
+			light.castShadow = false;
+			var dLight = 200;
+			var sLight = dLight * 0.25;
+			light.shadow.camera.left = -sLight;
+			light.shadow.camera.right = sLight;
+			light.shadow.camera.top = sLight;
+			light.shadow.camera.bottom = -sLight;
+
+			light.shadow.camera.near = dLight / 30;
+			light.shadow.camera.far = dLight;
+
+			light.shadow.mapSize.x = 1024 * 2;
+			light.shadow.mapSize.y = 1024 * 2;
+
+			scene.add(light);
+
+
+			window.addEventListener( 'resize', onWindowResize, false );
+
+		}
+
+		function onWindowResize() {
+
+            var divWidth =  computeGraphicsWidth();
+            var divHeight =  computeGraphicsHeight();
+			camera.aspect = divWidth / divHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize( divWidth, divHeight );
+
+		}
+
+        function computePeaks( X, Y )
+        {
+             return 3*(1-X)*(1-X)*Math.exp(-(X*X) - (Y+1)*(Y+1)) - 10*(X/5 - X*X*X - Y*Y*Y*Y*Y)*Math.exp(-X*X-Y*Y) - 1/3*Math.exp(-(X+1)*(X+1) - Y*Y);
+        }
+            
+        function peaksDerivX(x, y)
+        {
+            return -6*(1-x)*(1-x)*x*Math.exp(-x*x-(y+1)*(y+1))-6*(1-x)*Math.exp(-x*x-(y+1)*(y+1))+20*x*(-Math.pow(x,3)+x/5-Math.pow(y,5))*Math.exp(-x*x-y*y)-10*(1/5-3*x*x)*Math.exp(-x*x-y*y)-(-2*x-2)*Math.exp((-x-1)*(x+1)-y*y)/3;
+        }
+        
+        function peaksDerivY(x, y)
+        {
+            return -6*(1-x)*(1-x)*(y+1)*Math.exp(-(y+1)*(y+1)-x*x)+20*y*(-Math.pow(y,5)-Math.pow(x,3)+x/5)*Math.exp(-y*y-x*x)+50*Math.pow(y,4)*Math.exp(-y*y-x*x)+2*y*Math.exp((-x-1)*(x+1)-y*y)/3;   
+        }
+            
+
+
+		function generateHeight( width, depth, minHeight, maxHeight ) {
+
+			// Generates the height data (a sinus wave)
+            // Dave: Modified to produce a Matlab-style "Peaks" function
+
+			var size = width * depth;
+			var data = new Float32Array(size);
+
+			var hRange = maxHeight - minHeight;
+			var w2 = width / 2;
+			var d2 = depth / 2;
+			var phaseMult = 12;
+
+			var p = 0;
+			for ( var j = 0; j < depth; j++ ) {
+				for ( var i = 0; i < width; i++ ) {
+
+					//var radius = Math.sqrt(
+					//		Math.pow( ( i - w2 ) / w2, 2.0 ) +
+					//		Math.pow( ( j - d2 ) / d2, 2.0 ) );
+//
+					//var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
+                   
+                    var X = -3.0 + i * 6.0/width;
+                    var Y = -3.0 + j * 6.0/depth;
+                   
+                    
+                    
+                   
+         
+                    var height = computePeaks(X,Y);
+                  
+					data[ p ] = 3*height;
+
+					p++;
+				}
+			}
+
+			return data;
+
+		}
+
+
+		function createObjectMaterial() {
+			var c = Math.floor( Math.random() * ( 1 << 24 ) );
+			return new THREE.MeshPhongMaterial( { color: c } );
+		}
+            
+        function updateParticles( up )
+        {
+            for ( i = 0; i < scene.children.length; i ++ ) 
+            {
+				var object = scene.children[ i ];
+				if ( object instanceof THREE.Points ) {
+                    for( j = 0; j < object.geometry.vertices.length; j++ )
+                    {
+                        var v = object.geometry.vertices[j];// = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+
+                        var x= v.x*6/100;
+                        var y=v.z*6/100;
+                        
+                        var deriv_x = peaksDerivX(x,y);
+                        var deriv_y = peaksDerivY(x,y);
+
+                    
+                        x += up * 0.01* deriv_x;
+                        y += up * 0.01* deriv_y;                     
+
+                         var X =  x;// * 6.0/100;
+
+
+                         var Y =  y;// * 6.0/100;
+
+                         var height = computePeaks(X,Y);
+                        
+                         object.geometry.vertices[j].x = x* 100/6;
+                         object.geometry.vertices[j].z =y* 100/6;
+                         object.geometry.vertices[j].y =3 * height + 0.5;
+                    }
+                    // have to flag this for update
+                    object.geometry.verticesNeedUpdate = true;
+
+				}     
+            }
+        }
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+
+            if( render_flag )
+            {
+                 updateParticles(1.0);
+                 //updateParticles(-1.0);
+			     render();
+			     stats.update();
+            }
+
+		}
+
+		function render() {
+
+			var deltaTime = clock.getDelta();
+
+			/*if ( dynamicObjects.length < maxNumObjects && time > timeNextSpawn ) {
+				generateObject();
+				timeNextSpawn = time + objectTimePeriod;
+			}*/
+
+			//updatePhysics( deltaTime );
+
+			controls.update( deltaTime );
+
+			renderer.render( scene, camera );
+
+			time += deltaTime;
+
+		}
+
+		/*function updatePhysics( deltaTime ) {
+
+			physicsWorld.stepSimulation( deltaTime, 10 );
+
+			// Update objects
+			for ( var i = 0, il = dynamicObjects.length; i < il; i++ ) {
+				var objThree = dynamicObjects[ i ];
+				var objPhys = objThree.userData.physicsBody;
+				var ms = objPhys.getMotionState();
+				if ( ms ) {
+
+					ms.getWorldTransform( transformAux1 );
+					var p = transformAux1.getOrigin();
+					var q = transformAux1.getRotation();
+					objThree.position.set( p.x(), p.y(), p.z() );
+					objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+
+				}
+			}
+		}*/
+
+        </script>    
+    <script>
+
+    </script>
+</body>
+</html>

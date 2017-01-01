@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+
+<!--
+Copyright (c) 2012 Brandon Jones
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+    be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source
+    distribution.
+-->
+
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+        <title>HTML HUD Performance Test</title>
+
+        <link href="css/common.css" rel="stylesheet" type="text/css" />
+        <style>
+            
+            body{
+                font-family: "Trebuchet MS", sans-serif;
+                margin: 50px;
+            }
+            .demoHeaders {
+                margin-top: 2em;
+            }
+            #dialog-link {
+                padding: .4em 1em .4em 20px;
+                text-decoration: none;
+                position: relative;
+            }
+            #dialog-link span.ui-icon {
+                margin: 0 5px 0 0;
+                position: absolute;
+                left: .2em;
+                top: 50%;
+                margin-top: -8px;
+            }
+            #icons {
+                margin: 0;
+                padding: 0;
+            }
+            #icons li {
+                margin: 2px;
+                position: relative;
+                padding: 4px 0;
+                cursor: pointer;
+                float: left;
+                list-style: none;
+            }
+            #icons span.ui-icon {
+                float: left;
+                margin: 0 4px;
+            }
+            .fakewindowcontain .ui-widget-overlay {
+                position: absolute;
+            }
+            select {
+                width: 200px;
+            }
+            
+            #customControls {
+                margin-left: 20px;
+                z-index: 2;
+            }
+
+            #canvas-align {
+                position: relative;
+                width: 854px;
+                height: 480px;
+                margin: auto;
+            }
+
+            #hud {
+                position: absolute;
+                top: 0;
+                width: 854px;
+                height: 480px;
+                margin: auto;
+                z-index: 3;
+                display: none;
+            }
+
+            #hud.visible {
+                display: block;
+            }
+
+            #health, #ammo, #log {
+                position: absolute;
+                border: 3px solid #FFF;
+                border-radius: 5px;
+                color: #FFF;
+                font-family: arial;
+            }
+
+            #health {
+                bottom: 10px;
+                left: 10px;
+                background: #AA3333;
+                font-size: 20pt;
+                font-weight: bold;
+                padding: 5px;
+            }
+
+            #ammo {
+                bottom: 10px;
+                right: 10px;
+                background: #3333AA;
+                font-size: 20pt;
+                font-weight: bold;
+                padding: 5px;
+            }
+
+            #log {
+                top: 10px;
+                left: 10px;
+                background: #33AA33;
+                overflow: auto;
+                width: 300px;
+                height: 100px;
+                font-size: 11pt;
+            }
+
+            #stats {
+                float: right;
+            }
+
+            .transparent #health {
+                background: rgba(120, 20, 20, 0.5);
+            }
+
+            .transparent #ammo {
+                background: rgba(20, 20, 120, 0.5);
+            }
+
+            .transparent #log {
+                background: rgba(20, 120, 20, 0.5);
+            }
+
+            #hud.perspective {
+                -webkit-perspective: 500px;
+                -moz-perspective: 500px;
+            }
+
+            .perspective #health {
+                -webkit-transform: rotateY(25deg);
+                -moz-transform: rotateY(25deg);
+            }
+
+            .perspective #ammo {
+                -webkit-transform: rotateY(-25deg);
+                -moz-transform: rotateY(-25deg);
+            }
+
+            .perspective #log {
+                -webkit-transform: rotateY(20deg);
+                -moz-transform: rotateY(20deg);
+            }
+
+            @-moz-keyframes heartbeat {
+                0% { margin-bottom: 0; }
+
+                10% { margin-bottom: 10px; }
+              
+                20% { margin-bottom: 0; }
+
+                30% { margin-bottom: 10px; }
+
+                40% { margin-bottom: 0; }
+            }
+
+            @-webkit-keyframes heartbeat {
+                0% { margin-bottom: 0; }
+
+                10% { margin-bottom: 10px; }
+              
+                20% { margin-bottom: 0; }
+
+                30% { margin-bottom: 10px; }
+
+                40% { margin-bottom: 0; }
+            }  
+
+            .animated #health, .animated #ammo {
+                -webkit-animation-duration: 1s;
+                -webkit-animation-name: heartbeat;
+                -webkit-animation-iteration-count: infinite;
+
+                -moz-animation-duration: 1s;
+                -moz-animation-name: heartbeat;
+                -moz-animation-iteration-count: infinite;
+            }
+        </style>
+    </head>
+    <body ng-app>
+        
+        <script src="../build/three.js"></script>
+	    <!--<script src="js/libs/ammo.js"></script>-->
+	    <script src="js/controls/OrbitControls.js"></script>
+        <script src="js/Detector.js"></script>
+	    <script src="js/libs/stats.min.js"></script>
+        
+        <div id="page-header" class="content-column">
+            <h1>HTML HUD Performance Test</h1>
+        </div>
+        <div id="content-frame" ng-controller="HudState">
+            <div id="canvas-container">
+                <div id="canvas-align">
+                    <div id="container"></div>
+                    <div id="hud" ng-class="{visible: style.visible, transparent: style.transparent, perspective: style.perspective, animated: style.animated}">
+                        <div id="health">
+                            <b>HP:</b> {{health}}
+                        </div>
+                        <div id="ammo">
+                            <b>Ammo:</b> {{ammo}}/{{clipSize}}
+                        </div>
+                        <div id="log">
+                            <div ng-repeat="log in logs">{{log}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="controls-container" class="content-column">
+                <label><input type="checkbox" ng-model="style.visible"/> Show HUD</label>
+                <label><input type="checkbox" ng-model="style.update"/> Update Values</label>
+                <label><input type="checkbox" ng-model="style.transparent"/> Transparent</label>
+                <label><input type="checkbox" ng-model="style.perspective"/> Perspective</label>
+                <label><input type="checkbox" ng-model="style.animated"/> Animated</label>
+                <label><input type="checkbox" ng-model="style.allTheCrates"/> Draw All The Crates!</label>
+            </div>
+        </div>
+
+        
+        <script src="js/angular-1.0.0rc9.min.js"></script>
+        <script src="js/util/require.js"></script>
+
+
+        <script>
+            /*
+            Buttons
+            1) Start / Stop
+            2) Pause
+            3) Save
+            4) Reset
+            5) Load
+            
+            
+            User Data
+            1) Population Size (slider/number box)
+            2) Max Epochs " "
+            3) Input Surface (function) - selection
+            Advanced
+            4) Breeding Scheme (roullete, Max breeder in tile)
+            5) Fitness Function - list
+            6) Mutation Rate - slider
+            
+            Things To View
+            1) Hall of fame
+            2) current generation
+            3) current best - in text view
+            4) population std deviation
+            5) average fitness over time
+            6) etc
+            
+            
+            
+            */
+            require.config({
+                baseUrl: "js"
+            });
+            
+
+            // Angular model
+            function HudState($scope) {
+                $scope.health = 100;
+                $scope.ammo = 16;
+                $scope.clipSize = 50;
+                $scope.logs = [
+                    "1:01:01 - You've spotted a wild crate",
+                    "1:02:02 - You've spotted a feral crate",
+                    "1:03:03 - You've spotted a weak crate",
+                    "1:04:04 - You've spotted a superior crate",
+                    "1:05:05 - You've spotted a giant crate",
+                    "1:06:06 - You've spotted a crate",
+                    "1:06:06 - You've spotted the floor!"
+                ];
+
+                $scope.style = {
+                    visible: true,
+                    update: true,
+                    transparent: false,
+                    perspective: false,
+                    animated: false,
+                    allTheCrates: false
+                };
+            }
+
+            var contentFrame = document.getElementById("content-frame");
+            var appScope = angular.element(contentFrame).scope();
+                  /*  if(appScope.style.update) {
+                        appScope.$apply(function(){
+                            appScope.health = Math.floor(Math.sin(0.5) * 25) + 65;
+                            appScope.ammo = appScope.clipSize - (Math.floor(0.5* 0.0075) % appScope.clipSize);
+                        });
+                    }*/
+            
+            var render_flag = true;
+
+            // communication between iframes source
+            // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+            document.addEventListener("message", function(e){
+                                      alert("button clicked");
+                                      }, false);
+
+
+            /*function receiveMessage(event)
+            {
+
+              var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
+              if (origin !== "../jquery-ui-1.12.1.custom/index.html")
+                return;
+
+              if( event.data = "stop render")
+              {   
+
+                  render_flag = false;
+              }
+              // ...
+            }*/
+            // Detects webgl
+            if ( ! Detector.webgl ) {
+                Detector.addGetWebGLMessage();
+                document.getElementById( 'container' ).innerHTML = "";
+            }
+
+            // - Global variables -
+
+            // Heightfield parameters
+            var terrainWidthExtents = 100;
+            var terrainDepthExtents = 100;
+            var terrainWidth = 128;
+            var terrainDepth = 128;
+            var terrainHalfWidth = terrainWidth / 2;
+            var terrainHalfDepth = terrainDepth / 2;
+            var terrainMaxHeight = 8;
+            var terrainMinHeight = -2;
+
+            // Graphics variables
+            var container, stats;
+            var camera, controls, scene, renderer;
+            var terrainMesh, texture;
+            var clock = new THREE.Clock();
+
+            // Physics variables
+            var collisionConfiguration;
+            var dispatcher;
+            var broadphase;
+            var solver;
+            var physicsWorld;
+            var terrainBody;
+            var dynamicObjects = [];
+            //var transformAux1 = new Ammo.btTransform();
+    //
+            var heightData = null;
+            var ammoHeightData = null;
+
+            var time = 0;
+            var objectTimePeriod = 3;
+            var timeNextSpawn = time + objectTimePeriod;
+            var maxNumObjects = 30;
+
+            // - Main code -
+            init();
+            animate();
+
+            function init() {
+
+                heightData = generateHeight( terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight );
+
+                initGraphics();
+
+                //initPhysics();
+
+            }
+
+            function initGraphics() {
+
+                container = document.getElementById( 'container' );
+
+                renderer = new THREE.WebGLRenderer();
+                renderer.setClearColor( 0xbfd1e5 );
+                renderer.shadowMap.enabled = true;
+                renderer.setPixelRatio( window.devicePixelRatio );
+                renderer.setSize( 854, 480 );
+
+                container.innerHTML = "";
+
+                container.appendChild( renderer.domElement );
+
+                stats = new Stats();
+                stats.domElement.style.position = 'right';
+                stats.domElement.style.top = '0px';
+                stats.domElement.style.float = 'right';
+                container.appendChild( stats.domElement );
+
+
+                camera = new THREE.PerspectiveCamera( 60, 854 / 480, 0.2, 2000 );
+
+                scene = new THREE.Scene();
+
+                camera.position.y = heightData[ terrainHalfWidth + terrainHalfDepth * terrainWidth ] * ( terrainMaxHeight - terrainMinHeight ) + 5;
+
+                camera.position.z = terrainDepthExtents / 2;
+                camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+
+                controls = new THREE.OrbitControls( camera );
+
+                var geometry = new THREE.PlaneBufferGeometry( 100, 100, terrainWidth - 1, terrainDepth - 1 );
+                geometry.rotateX( -Math.PI / 2 );
+
+                var vertices = geometry.attributes.position.array;
+
+                for ( var i = 0, j = 0, l = vertices.length; i < l; i++, j += 3 ) {
+
+                    // j + 1 because it is the y component that we modify
+                    vertices[ j + 1 ] = heightData[ i ];
+
+                }
+
+                geometry.computeVertexNormals();
+
+                var groundMaterial = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
+                terrainMesh = new THREE.Mesh( geometry, groundMaterial );
+                terrainMesh.receiveShadow = true;
+                terrainMesh.castShadow = true;
+
+                scene.add( terrainMesh );
+
+                var textureLoader = new THREE.TextureLoader();
+                textureLoader.load("textures/grid.png", function ( texture ) {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set( terrainWidth - 1, terrainDepth - 1 );
+                    groundMaterial.map = texture;
+                    groundMaterial.needsUpdate = true;
+
+                });
+
+                var light = new THREE.DirectionalLight( 0xffffff, 1 );
+                light.position.set( 100, 100, 50 );
+                light.castShadow = true;
+                var dLight = 200;
+                var sLight = dLight * 0.25;
+                light.shadow.camera.left = -sLight;
+                light.shadow.camera.right = sLight;
+                light.shadow.camera.top = sLight;
+                light.shadow.camera.bottom = -sLight;
+
+                light.shadow.camera.near = dLight / 30;
+                light.shadow.camera.far = dLight;
+
+                light.shadow.mapSize.x = 1024 * 2;
+                light.shadow.mapSize.y = 1024 * 2;
+
+                scene.add(light);
+
+
+                window.addEventListener( 'resize', onWindowResize, false );
+
+            }
+
+            function onWindowResize() {
+
+                camera.aspect = 854 / 480;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize( 854, 480 );
+
+            }
+
+
+
+            function generateHeight( width, depth, minHeight, maxHeight ) {
+
+                // Generates the height data (a sinus wave)
+
+                var size = width * depth;
+                var data = new Float32Array(size);
+
+                var hRange = maxHeight - minHeight;
+                var w2 = width / 2;
+                var d2 = depth / 2;
+                var phaseMult = 12;
+
+                var p = 0;
+                for ( var j = 0; j < depth; j++ ) {
+                    for ( var i = 0; i < width; i++ ) {
+
+                        var radius = Math.sqrt(
+                                Math.pow( ( i - w2 ) / w2, 2.0 ) +
+                                Math.pow( ( j - d2 ) / d2, 2.0 ) );
+
+                        var height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5 * hRange + minHeight;
+
+                        data[ p ] = height;
+
+                        p++;
+                    }
+                }
+
+                return data;
+
+            }
+
+
+            function createObjectMaterial() {
+                var c = Math.floor( Math.random() * ( 1 << 24 ) );
+                return new THREE.MeshPhongMaterial( { color: c } );
+            }
+
+            function animate() {
+
+                requestAnimationFrame(animate);
+
+                if( render_flag )
+                {
+                     render();
+                     stats.update();
+                    
+                    
+                }
+                
+                
+
+            }
+
+            function render() {
+
+                var deltaTime = clock.getDelta();
+
+
+
+
+                controls.update( deltaTime );
+
+                renderer.render( scene, camera );
+
+                time += deltaTime;
+
+            }
+
+ 
+        </script>
+
+        
+    </body>
+</html>
